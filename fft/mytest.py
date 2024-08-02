@@ -8,7 +8,7 @@ torch.manual_seed(1)
 
 x0 = torch.rand(320)
 y0 = torch.fft.rfft(x0)
-y1 = torch.ops.top.rfft(x0)
+y1 = torch.ops.top.rfft(x0, True)
 d = (y0 - y1).abs().max().item()
 
 print(f"ref : {y0.shape}, {y0.abs().max()}, {y0.abs().min()}")

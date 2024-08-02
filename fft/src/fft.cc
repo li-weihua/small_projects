@@ -1,8 +1,10 @@
-#include "pocketfft_hdronly.h"
+#include <chrono>
+#include <ratio>
 
+#include "pocketfft_hdronly.h"
 #include "torch/torch.h"
 
-torch::Tensor DoRfft(const torch::Tensor& input) {
+torch::Tensor DoRfft(const torch::Tensor& input, bool do_benchmark) {
   TORCH_CHECK(input.dtype() == torch::kFloat32);
   TORCH_CHECK(input.dim() == 1);
 
@@ -27,6 +29,27 @@ torch::Tensor DoRfft(const torch::Tensor& input) {
 
   pocketfft::r2c<float>(shape_in, stride_in, stride_out, axis, forward, data_in,
                         data_out, 1.0f);
+
+  if (do_benchmark) {
+    constexpr int kRepeats = 10;
+    float time[kRepeats] = {0};
+
+    for (int i = 0; i < kRepeats; ++i) {
+      auto start = std::chrono::high_resolution_clock::now();
+
+      pocketfft::r2c<float>(shape_in, stride_in, stride_out, axis, forward, data_in,
+                            data_out, 1.0f);
+
+      auto stop = std::chrono::high_resolution_clock::now();
+
+      time[i] = std::chrono::duration_cast<std::chrono::microseconds>(stop - start)
+                    .count();
+    }
+
+    for (int i = 0; i < kRepeats; ++i) {
+      std::cout << "iter [" << i << "] : " << time[i] << std::endl;
+    }
+  }
 
   return output;
 }
